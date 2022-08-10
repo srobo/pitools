@@ -1,11 +1,14 @@
+"""Code to get the asset code."""
 import math
 import struct
 from pathlib import Path
 from typing import List
+
 from srobo_pitools.vcmailbox import VideoCoreMailbox
 
 
 class AssetCode:
+    """Get and set the asset code."""
 
     HEADER_FORMAT = "<ccBB"
 
@@ -13,6 +16,7 @@ class AssetCode:
         self._vcm = VideoCoreMailbox(vcmailbox_path=vcmailbox_path)
 
     def decode_asset_code(self, data_int: List[int]) -> str:
+        """Decode the asset code from OTP data."""
         data = [x.to_bytes(4, byteorder="big") for x in data_int]
         sig_1, sig_2, version, length = struct.unpack(self.HEADER_FORMAT, data.pop(0))
         if sig_1 != b"s" or sig_2 != b"r" or version != 0:
@@ -21,15 +25,20 @@ class AssetCode:
         return remaining_data[:length].decode("ascii")
 
     def encode_asset_code(self, code: str) -> List[int]:
+        """Encode the asset code into OTP data."""
         length = len(code)
         data = [self.get_header(length)]
         padded_length = 4 * math.ceil(length / 4)
         encoded_asset_code = code.encode("ascii").ljust(padded_length, b"\x00")
         assert len(encoded_asset_code) % 4 == 0
-        data += [encoded_asset_code[i:i+4] for i in range(0, len(encoded_asset_code), 4)]
+        data += [
+            encoded_asset_code[i:i + 4]
+            for i in range(0, len(encoded_asset_code), 4)
+        ]
         return [int.from_bytes(x, byteorder="big") for x in data]
 
     def get_header(self, data_length: int) -> bytes:
+        """Get the OTP data header."""
         header_version = 0
         max_chars = 7 * 4  # 32 bits / 8 = 4 chars per address
         if data_length not in range(0, max_chars):
@@ -37,10 +46,16 @@ class AssetCode:
         return struct.pack(self.HEADER_FORMAT, b"s", b"r", header_version, data_length)
 
     def get_asset_code(self) -> str:
+        """Get the asset code."""
         otp_values = self._vcm.get_customer_otp()
         return self.decode_asset_code(otp_values)
 
     def set_asset_code(self, code: str) -> None:
+        """
+        Set the asset code.
+
+        Warning: This is permanent!
+        """
         if self._vcm.get_customer_otp() != [0] * VideoCoreMailbox.OTP_ROW_NUM:
             raise ValueError("The asset code has already been set.")
 

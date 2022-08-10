@@ -9,7 +9,20 @@ license = "MIT"
 python = "^3.7"
 
 [tool.poetry.dev-dependencies]
-
+flake8 = "*"
+flake8-commas = "*"
+flake8-comprehensions = "*"
+flake8-debugger = "*"
+flake8-docstrings = "*"
+flake8-isort = "*"
+flake8-mutable = "*"
+flake8-todo = "*"
+mypy = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-asyncio = "*"
+rope = "*"
+isort = {version = "*",extras = ["pyproject"]}
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
